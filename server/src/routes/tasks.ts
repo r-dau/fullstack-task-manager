@@ -1,86 +1,103 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import prisma from "../prisma";
+import ApiError from "../errors/ApiError";
 
 const router = Router();
 
-// Get all tasks
-router.get("/", async (_req, res) => {
-  const tasks = await prisma.task.findMany();
-  res.json(tasks);
+const parseId = (idParam: string): number | null => {
+  const id = parseInt(idParam, 10);
+  return isNaN(id) ? null : id;
+};
+
+// GET /tasks - get all tasks
+router.get("/", async (_req, res, next) => {
+  try {
+    const tasks = await prisma.task.findMany();
+    res.json(tasks);
+  } catch (error) {
+    next(error);
+  }
 });
 
-// Create a new task
-router.post("/", async (req, res) => {
+// POST /tasks - create a new task
+router.post("/", async (req, res, next) => {
   const { title, description } = req.body;
-  const newTask = await prisma.task.create({
-    data: { title, description },
-  });
-  res.status(201).json(newTask);
-});
 
-// Update a task (toggle completed)
-router.patch("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { completed } = req.body;
-  const updatedTask = await prisma.task.update({
-    where: { id: Number(id) },
-    data: { completed },
-  });
-  res.json(updatedTask);
-});
-
-// Delete a task
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  await prisma.task.delete({
-    where: { id: Number(id) },
-  });
-  res.status(204).send();
-});
-
-// Get single task by ID
-router.get<{ id: string }>("/:id", async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid ID format" });
-    return;
+  if (!title || typeof title !== "string") {
+    return next(new ApiError(400, "Title is required and must be a string"));
   }
 
   try {
-    const task = await prisma.task.findUnique({
-      where: { id },
+    const newTask = await prisma.task.create({
+      data: { title, description },
     });
-
-    if (!task) {
-      res.status(404).json({ error: "Task not found" });
-      return;
-    }
-
-    res.json(task);
+    res.status(201).json(newTask);
   } catch (error) {
-    res.status(500).json({ error: "Something went wrong" });
+    next(error);
   }
 });
 
-// Update a task (PUT)
-router.put("/:id", async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
+// GET /tasks/:id - get single task
+router.get("/:id", async (req, res, next) => {
+  const id = parseId(req.params.id);
+  if (id === null) return next(new ApiError(400, "Invalid ID format"));
+
+  try {
+    const task = await prisma.task.findUnique({ where: { id } });
+    if (!task) return next(new ApiError(404, "Task not found"));
+    res.json(task);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /tasks/:id - full update
+router.put("/:id", async (req, res, next) => {
+  const id = parseId(req.params.id);
   const { title, description, completed } = req.body;
 
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid ID format" });
-    return;
-  }
+  if (id === null) return next(new ApiError(400, "Invalid ID format"));
+
   try {
     const updatedTask = await prisma.task.update({
       where: { id },
       data: { title, description, completed },
     });
-
     res.json(updatedTask);
   } catch (error) {
-    res.status(404).json({ error: "Task not found or update failed" });
+    next(new ApiError(404, "Task not found or update failed"));
+  }
+});
+
+// PATCH /tasks/:id - toggle completion
+router.patch("/:id", async (req, res, next) => {
+  const id = parseId(req.params.id);
+  const { completed } = req.body;
+
+  if (id === null) return next(new ApiError(400, "Invalid ID format"));
+
+  try {
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: { completed },
+    });
+    res.json(updatedTask);
+  } catch (error) {
+    next(new ApiError(404, "Task not found or update failed"));
+  }
+});
+
+// DELETE /tasks/:id - delete task
+router.delete("/:id", async (req, res, next) => {
+  const id = parseId(req.params.id);
+
+  if (id === null) return next(new ApiError(400, "Invalid ID format"));
+
+  try {
+    await prisma.task.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    next(new ApiError(404, "Task not found or delete failed"));
   }
 });
 
