@@ -7,6 +7,7 @@ module.exports = {
   moduleFileExtensions: ["ts", "js", "json"],
   testRegex: ".*\\.test\\.ts$",
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1", // optional, falls du mit @-Alias arbeitest
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
+  maxWorkers: 1,
 };
