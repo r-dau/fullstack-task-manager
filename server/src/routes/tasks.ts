@@ -58,6 +58,16 @@ router.put("/:id", async (req, res, next) => {
 
   if (id === null) return next(new ApiError(400, "Invalid ID format"));
 
+  if (typeof title !== "string" || title.trim() === "") {
+    return next(
+      new ApiError(400, "Title is required and must be a non-empty string")
+    );
+  }
+
+  if (completed !== undefined && typeof completed !== "boolean") {
+    return next(new ApiError(400, "Completed must be a boolean"));
+  }
+
   try {
     const updatedTask = await prisma.task.update({
       where: { id },
@@ -75,6 +85,10 @@ router.patch("/:id", async (req, res, next) => {
   const { completed } = req.body;
 
   if (id === null) return next(new ApiError(400, "Invalid ID format"));
+
+  if (completed !== undefined && typeof completed !== "boolean") {
+    return next(new ApiError(400, "Completed must be a boolean"));
+  }
 
   try {
     const updatedTask = await prisma.task.update({
@@ -94,8 +108,8 @@ router.delete("/:id", async (req, res, next) => {
   if (id === null) return next(new ApiError(400, "Invalid ID format"));
 
   try {
-    await prisma.task.delete({ where: { id } });
-    res.status(204).send();
+    const deletedTask = await prisma.task.delete({ where: { id } });
+    res.status(200).json(deletedTask);
   } catch (error) {
     next(new ApiError(404, "Task not found or delete failed"));
   }
