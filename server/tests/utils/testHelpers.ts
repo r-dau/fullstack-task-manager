@@ -1,22 +1,45 @@
 import request from "supertest";
 import app from "../../src/app";
+import { PrismaClient } from "@prisma/client";
 
-export async function createTestTask(overrides = {}) {
-  const defaultTask = {
+const prisma = new PrismaClient();
+
+export async function clearDatabase() {
+  await prisma.task.deleteMany({});
+  await prisma.user.deleteMany({});
+}
+
+export interface TaskData {
+  title: string;
+  description?: string;
+  completed?: boolean;
+}
+
+export async function createTestTask(
+  token?: string,
+  overrides: Partial<TaskData> = {}
+) {
+  const defaultTask: TaskData = {
     title: "Test Task",
     description: "Test Description",
     completed: false,
     ...overrides,
   };
 
-  const response = await request(app).post("/tasks").send(defaultTask);
+  const req = request(app).post("/tasks").send(defaultTask);
+
+  if (token) {
+    req.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await req;
   return response.body;
 }
 
-export function getInvalidId(): any {
+export function getInvalidId(): string {
   return "not-a-valid-id";
 }
 
 export function getNonExistentId(): number {
-  return 999999;
+  return 999_999_999;
 }

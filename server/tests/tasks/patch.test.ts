@@ -4,20 +4,36 @@ import {
   createTestTask,
   getInvalidId,
   getNonExistentId,
+  clearDatabase,
 } from "../utils/testHelpers";
+import { getTestToken } from "../utils/getTestToken";
 
 describe("PATCH /tasks/:id", () => {
   let taskId: number;
+  let token: string;
 
-  beforeAll(async () => {
-    const task = await createTestTask();
+  beforeEach(async () => {
+    await clearDatabase();
+
+    const auth = await getTestToken();
+    token = auth.token;
+
+    const task = await createTestTask(token);
+
+    if (!task || typeof task.id !== "number") {
+      throw new Error("Failed to create test task");
+    }
+
     taskId = task.id;
   });
 
   it("should update the completed status successfully", async () => {
-    const response = await request(app).patch(`/tasks/${taskId}`).send({
-      completed: true,
-    });
+    const response = await request(app)
+      .patch(`/tasks/${taskId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        completed: true,
+      });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id", taskId);
@@ -25,9 +41,12 @@ describe("PATCH /tasks/:id", () => {
   });
 
   it("should return 400 for invalid ID format", async () => {
-    const response = await request(app).patch(`/tasks/${getInvalidId()}`).send({
-      completed: true,
-    });
+    const response = await request(app)
+      .patch(`/tasks/${getInvalidId()}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        completed: true,
+      });
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty("error", "Invalid ID format");
@@ -36,6 +55,7 @@ describe("PATCH /tasks/:id", () => {
   it("should return 404 if task does not exist", async () => {
     const response = await request(app)
       .patch(`/tasks/${getNonExistentId()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({
         completed: true,
       });
@@ -48,9 +68,12 @@ describe("PATCH /tasks/:id", () => {
   });
 
   it("should return 400 if completed is not a boolean", async () => {
-    const response = await request(app).patch(`/tasks/${taskId}`).send({
-      completed: "not-a-boolean",
-    });
+    const response = await request(app)
+      .patch(`/tasks/${taskId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        completed: "not-a-boolean",
+      });
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty(
