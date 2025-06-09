@@ -1,7 +1,15 @@
 import request from "supertest";
 import app from "../../src/app";
+import { getTestToken } from "../utils/getTestToken";
 
 describe("POST /tasks", () => {
+  let token: string;
+
+  beforeAll(async () => {
+    const auth = await getTestToken();
+    token = auth.token;
+  });
+
   it("should create a new task and return 201 with the task data", async () => {
     const taskData = {
       title: "Test Task",
@@ -11,6 +19,7 @@ describe("POST /tasks", () => {
     const response = await request(app)
       .post("/tasks")
       .send(taskData)
+      .set("Authorization", `Bearer ${token}`)
       .set("Content-Type", "application/json");
 
     expect(response.status).toBe(201);
@@ -27,6 +36,7 @@ describe("POST /tasks", () => {
     const response = await request(app)
       .post("/tasks")
       .send(taskData)
+      .set("Authorization", `Bearer ${token}`)
       .set("Content-Type", "application/json");
 
     expect(response.status).toBe(400);
@@ -45,6 +55,7 @@ describe("POST /tasks", () => {
     const response = await request(app)
       .post("/tasks")
       .send(taskData)
+      .set("Authorization", `Bearer ${token}`)
       .set("Content-Type", "application/json");
 
     expect(response.status).toBe(400);

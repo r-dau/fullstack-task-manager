@@ -4,13 +4,21 @@ import {
   createTestTask,
   getInvalidId,
   getNonExistentId,
+  clearDatabase,
 } from "../utils/testHelpers";
+import { getTestToken } from "../utils/getTestToken";
 
 describe("PUT /tasks/:id", () => {
   let taskIdToUpdate: number;
+  let token: string;
 
-  beforeAll(async () => {
-    const task = await createTestTask({
+  beforeEach(async () => {
+    await clearDatabase();
+
+    const auth = await getTestToken();
+    token = auth.token;
+
+    const task = await createTestTask(token, {
       title: "Original Title",
       description: "Original Description",
     });
@@ -27,18 +35,22 @@ describe("PUT /tasks/:id", () => {
 
     const response = await request(app)
       .put(`/tasks/${taskIdToUpdate}`)
-      .send(updatedData);
+      .send(updatedData)
+      .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject(updatedData);
   });
 
   it("should return 400 for invalid ID format", async () => {
-    const response = await request(app).put(`/tasks/${getInvalidId()}`).send({
-      title: "Test",
-      description: "Test",
-      completed: false,
-    });
+    const response = await request(app)
+      .put(`/tasks/${getInvalidId()}`)
+      .send({
+        title: "Test",
+        description: "Test",
+        completed: false,
+      })
+      .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty("error", "Invalid ID format");
@@ -51,7 +63,8 @@ describe("PUT /tasks/:id", () => {
         title: "Does not exist",
         description: "Test",
         completed: false,
-      });
+      })
+      .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty(
@@ -61,10 +74,13 @@ describe("PUT /tasks/:id", () => {
   });
 
   it("should return 400 if title is missing", async () => {
-    const response = await request(app).put(`/tasks/${taskIdToUpdate}`).send({
-      description: "No title",
-      completed: false,
-    });
+    const response = await request(app)
+      .put(`/tasks/${taskIdToUpdate}`)
+      .send({
+        description: "No title",
+        completed: false,
+      })
+      .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty(
@@ -74,11 +90,14 @@ describe("PUT /tasks/:id", () => {
   });
 
   it("should return 400 if 'completed' is not a boolean", async () => {
-    const response = await request(app).put(`/tasks/${taskIdToUpdate}`).send({
-      title: "Invalid completed type",
-      description: "Completed is not boolean",
-      completed: 123,
-    });
+    const response = await request(app)
+      .put(`/tasks/${taskIdToUpdate}`)
+      .send({
+        title: "Invalid completed type",
+        description: "Completed is not boolean",
+        completed: 123,
+      })
+      .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty(
