@@ -39,7 +39,7 @@ export class AuthService {
       expiresIn: "1h",
     });
 
-    return { token };
+    return { token, user };
   }
 
   verifyToken(token: string) {
