@@ -8,12 +8,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) setUser(JSON.parse(savedUser));
+    try {
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (err) {
+      console.error("Invalid user in localStorage", err);
+      localStorage.removeItem("user");
+    }
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch("/api/login", {
+    const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -22,20 +29,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const data = await res.json();
     setUser(data.user);
     localStorage.setItem("user", JSON.stringify(data.user));
-    navigate("/tasks");
+    navigate("/");
   };
 
-  const register = async (email: string, password: string) => {
-    const res = await fetch("/api/register", {
+  const register = async (name: string, email: string, password: string) => {
+    const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ name, email, password }),
     });
     if (!res.ok) throw new Error("Register failed");
     const data = await res.json();
     setUser(data.user);
     localStorage.setItem("user", JSON.stringify(data.user));
-    navigate("/tasks");
+    navigate("/");
   };
 
   const logout = () => {
