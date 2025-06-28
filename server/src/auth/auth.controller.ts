@@ -13,8 +13,12 @@ export class AuthController {
     const { email, password, name } = req.body;
 
     try {
-      const user = await this.authService.registerUser(email, password, name);
-      res.status(201).json(user);
+      const createdUser = await this.authService.registerUser(
+        email,
+        password,
+        name
+      );
+      res.status(201).json({ user: createdUser });
     } catch (error: any) {
       const status = error instanceof ApiError ? error.statusCode : 500;
       res.status(status).json({ error: error.message });
@@ -25,8 +29,8 @@ export class AuthController {
     const { email, password } = req.body;
 
     try {
-      const result = await this.authService.loginUser(email, password);
-      res.status(200).json(result);
+      const { token, user } = await this.authService.loginUser(email, password);
+      res.status(200).json({ token, user });
     } catch (error: any) {
       const status = error instanceof ApiError ? error.statusCode : 500;
       res.status(status).json({ error: error.message });
