@@ -9,9 +9,9 @@ export async function getTestToken() {
     password: "securepassword",
   };
 
-  await request(app).post("/auth/register").send(user);
+  await request(app).post("/api/auth/register").send(user);
 
-  const res = await request(app).post("/auth/login").send({
+  const res = await request(app).post("/api/auth/login").send({
     email: user.email,
     password: user.password,
   });

@@ -15,14 +15,15 @@ beforeAll(async () => {
 
 describe("Auth Endpoints", () => {
   it("should register a new user", async () => {
-    const res = await request(app).post("/auth/register").send(testUser);
+    const res = await request(app).post("/api/auth/register").send(testUser);
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty("id");
-    expect(res.body.email).toBe(testUser.email);
+    expect(res.body).toHaveProperty("user");
+    expect(res.body.user).toHaveProperty("id");
+    expect(res.body.user.email).toBe(testUser.email);
   });
 
   it("should login the user and return a token", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: testUser.email,
       password: testUser.password,
     });
@@ -31,7 +32,7 @@ describe("Auth Endpoints", () => {
   });
 
   it("should reject login with wrong password", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: testUser.email,
       password: "wrongPassword",
     });
@@ -51,7 +52,7 @@ describe("Auth Endpoints", () => {
   });
 
   it("should allow access with valid token", async () => {
-    const loginRes = await request(app).post("/auth/login").send({
+    const loginRes = await request(app).post("/api/auth/login").send({
       email: testUser.email,
       password: testUser.password,
     });
