@@ -1,9 +1,11 @@
-# Node modules
-node_modules/
-
-# Node modules (both back and frontend)
+# Node modules (backend and frontend)
 server/node_modules/
 client/node_modules/
+
+# Lockfiles at root
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Env files
 *.env
