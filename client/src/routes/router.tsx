@@ -3,6 +3,7 @@ import PrivateRoute from "../auth/PrivateRoute";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import { TaskProvider } from "../tasks/TaskProvider";
 
 export default function AppRouter() {
   return (
@@ -11,7 +12,9 @@ export default function AppRouter() {
         path="/"
         element={
           <PrivateRoute>
-            <Home />
+            <TaskProvider>
+              <Home />
+            </TaskProvider>
           </PrivateRoute>
         }
       />
